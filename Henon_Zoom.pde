@@ -1,5 +1,3 @@
-import processing.javafx.*;
-
 // Henon Phase Deep
 // a mathematical strange attractor
 // j.tarbell   May, 2004
@@ -12,72 +10,49 @@ import processing.javafx.*;
 // j.tarbell   April, 2005
 
 // number of points to draw in each iteration
-int dim = 1000;
 float offx, offy;
-float gs = 1.4;      // scale the visualization to match the applet size
-float ga = PI;       // slice constant (0...TWO_PI)
-float[] aList;
-int num = 0;
-int maxnum = 50000;
+float scale = 0.73;      // scale the visualization to match the applet size
+float a = random(TWO_PI);       // slice constant (0...TWO_PI)
+int maxnum = 5000;
 
 boolean drawing = true;
-
-// palette series attributes
-int gifID = 0;
-int gifNum = 9;
-String[] palette = new String[gifNum];
 
 // OBJECTS
 TravelerHenon[] travelers = new TravelerHenon[maxnum];
 
-int maxpal = 512;
-int numpal = 0;
-color[] goodcolor = new color[maxpal];
+color[] goodcolor = {#000000, #6b6556, #a09c84, #908b7c, #79746e, #755d35, #937343, #9c6b4b, #ab8259, #aa8a61, #578375, #f0f6f2, #d0e0e5, #d7e5ec, #d3dfea, #c2d7e7, #a5c6e3, #a6cbe6, #adcbe5, #77839d, #d9d9b9, #a9a978, #727b5b, #6b7c4b, #546d3e, #47472e, #727b52, #898a6a, #919272, #AC623b, #cb6a33, #9d5c30, #843f2b, #652c2a, #7e372b, #403229, #47392b, #3d2626, #362c26, #57392c, #998a72, #864d36, #544732 };
+color somecolor() {
+  // pick some random good color
+  return goodcolor[int(random(goodcolor.length))];
+}
 
 
 // MAIN METHODS
 void setup() {
-  // set window display properties
-  size(1000,1000,FX2D);
+  size(1000,1000,P2D);
   pixelDensity(2);
-//  size(dim,dim,P3D);
   background(255);
-
-      
-  // some palettes to choose from
-  palette[0] = "garnerA1";
-  palette[1] = "garnerA2";
-  palette[2] = "garnerA3";
-  palette[3] = "garnerB1";
-  palette[4] = "garnerB2";
-  palette[5] = "garnerB3";
-  palette[6] = "garnerC1";
-  palette[7] = "garnerC2";
-  palette[8] = "garnerC3";
-
   // gen slice
   renderSlice();
-
   // make some travelers
   for (int i=0;i<maxnum;i++) {
     travelers[i] = new TravelerHenon();
-    num++;
   }
   
 }
 
 void draw() {
-    // accelerator
+    // repeat to get drawing result faster
     for (int k=0;k<20;k++) {
       // draw all travelers
-      for (int i=0;i<num;i++) {
+      for (int i=0;i<maxnum;i++) {
         if (drawing) travelers[i].draw();
       }
     }
   
     // random mutations
     for (int k=0;k<2;k++) {
-      travelers[int(random(num))].rebirth();
+      travelers[int(random(maxnum))].rebirth();
     }
 }
 
@@ -98,23 +73,21 @@ void renderSlice() {
   //gifID = int(random(gifNum));
   // convert GIF palette into usable palette
   //takecolor(palette[gifID]+".gif");
-    takecolor("monet.jpg");
-
   // set random slice constant 0..TWO_PI
-  ga = random(0.2,TWO_PI-0.2);
+  a = random(0.2,TWO_PI-0.2);
   // avoid noid space
-  if ((ga>2.05) && (ga<2.6)) {
-    ga = random(1.2,1.7);
+  if ((a>2.05) && (a<2.6)) {
+    a = random(1.2,1.7);
   }
   
   // scale
-  gs = .73;
+  scale = .73;
   
   // random offset
   offx = random(1.0);
   offy = -0.1;
   
-  // begin drawing again
+  // begin drawing aain
   drawing = true;
 }
 
@@ -123,7 +96,6 @@ void renderSlice() {
 
 class TravelerHenon {
   float x, y;
-  int outofbounds;
 
   color myc;
 
@@ -133,18 +105,18 @@ class TravelerHenon {
 
   void draw() {
     // move through time
-    float t = x * cos(ga) - (y - x*x) * sin(ga);
-    y = x * sin(ga) + (y - x*x) * cos(ga);
+    float t = x * cos(a) - (y - x*x) * sin(a);
+    y = x * sin(a) + (y - x*x) * cos(a);
     x = t;
     float fuzx = random(-0.004,0.004);
     float fuzy = random(-0.004,0.004);
     
-    float px = fuzx + (x/gs+offx)*dim;
-    float py = fuzy + (y/gs+offy)*dim;
+    float px = fuzx + (x/scale+offx)*width;
+    float py = fuzy + (y/scale+offy)*height;
     
-    if ((px>0) && (px<dim) && (py>0) && (py<dim)) {
+    if ((px>0) && (px<width) && (py>0) && (py<height)) {
       // render  
-      stroke(red(myc),green(myc),blue(myc),56);
+      stroke(myc,56);
       point(px,py);
     }
   }
@@ -152,61 +124,7 @@ class TravelerHenon {
   void rebirth() {
     x = random(0,1.0);
     y = random(0,1.0);
-    outofbounds = 0;
-    float d = sqrt(x*x+y*y);
-    int idx = int(numpal*d)%numpal;
-    if (idx>=numpal) {
-      idx = numpal-1;
-    } else if (idx<0) {
-      idx = 0;
-    }
-    myc = goodcolor[idx];
+    myc = goodcolor[int(random(goodcolor.length))];
   }
 
-}
-
-
-// COLOR METHODS ------------------------------------------------------------------
-
-color somecolor() {
-  // pick some random good color
-  return goodcolor[int(random(numpal))];
-}
-
-void takecolor(String fn) {
-  // clear background to begin
-  background(255);
-  
-  // load color source
-  PImage b;
-  b = loadImage(fn);
-  image(b,0,0);
-  
-  // initialize palette length
-  numpal=0;
-
-  // find all distinct colors
-  for (int x=0;x<b.width;x++){
-    for (int y=0;y<b.height;y++) {
-      color c = get(x,y);
-      boolean exists = false;
-      for (int n=0;n<numpal;n++) {
-        if (c==goodcolor[n]) {
-          exists = true;
-          break;
-        }
-      }
-      if (!exists) {
-        // add color to palette
-        if (numpal<maxpal) {
-          goodcolor[numpal] = c;
-          numpal++;
-        } else {
-          break;
-        }
-      }
-    }
-  }
-
-  background(255);
 }
